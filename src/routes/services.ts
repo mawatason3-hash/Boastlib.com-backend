@@ -56,9 +56,29 @@ router.get("/platforms", async (_req, res) => {
 
 router.get("/search", async (req: AuthRequest, res) => {
   try {
-    const { q } = req.query;
+    const { q, platform } = req.query;
     const search = String(q || "").trim();
-    const wildcard = `%${search}%`;
+    const platformFilter = String(platform || "").trim();
+    const values: any[] = [];
+    const whereClauses: string[] = ["s.status = 'active'"];
+
+    if (platformFilter) {
+      values.push(platformFilter);
+      whereClauses.push(`LOWER(s.platform) = LOWER($${values.length})`);
+    }
+
+    const searchValueIndex = values.length + 1;
+    values.push(search);
+    values.push(`%${search}%`);
+
+    if (search) {
+      whereClauses.push(`(
+           s.platform ILIKE $${searchValueIndex + 1}
+           OR s.category ILIKE $${searchValueIndex + 1}
+           OR s.name ILIKE $${searchValueIndex + 1}
+           OR similarity(s.platform || ' ' || s.category || ' ' || s.name, $${searchValueIndex}) > 0.2
+         )`);
+    }
 
     const result = await query(
       `SELECT
@@ -75,25 +95,18 @@ router.get("/search", async (req: AuthRequest, res) => {
          m.guaranteed,
          m.drip_feed_enabled,
          GREATEST(
-           similarity(s.platform, $1),
-           similarity(s.category, $1),
-           similarity(s.name, $1),
-           similarity(s.platform || ' ' || s.category || ' ' || s.name, $1)
+           similarity(s.platform, $${searchValueIndex}),
+           similarity(s.category, $${searchValueIndex}),
+           similarity(s.name, $${searchValueIndex}),
+           similarity(s.platform || ' ' || s.category || ' ' || s.name, $${searchValueIndex})
          ) AS similarity
        FROM services s
        LEFT JOIN service_provider_mappings m
          ON m.service_id = s.id AND m.is_active_provider = true
-       WHERE s.status = 'active'
-         AND (
-           $1 = ''
-           OR s.platform ILIKE $2
-           OR s.category ILIKE $2
-           OR s.name ILIKE $2
-           OR similarity(s.platform || ' ' || s.category || ' ' || s.name, $1) > 0.2
-         )
+       WHERE ${whereClauses.join(" AND ")}
        ORDER BY similarity DESC, s.platform, s.category, s.name
        LIMIT 10`,
-      [search, wildcard]
+      values
     );
 
     return res.json(

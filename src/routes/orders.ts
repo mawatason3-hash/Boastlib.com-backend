@@ -58,7 +58,18 @@ router.post("/", requireAuth, async (req: AuthRequest, res) => {
 
 router.get("/", requireAuth, async (req: AuthRequest, res) => {
   try {
-    const result = await query(`SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC`, [req.user!.id]);
+    const result = await query(
+      `SELECT
+         o.*,
+         s.name AS service_name,
+         s.platform AS service_platform,
+         s.category AS service_category
+       FROM orders o
+       LEFT JOIN services s ON s.id = o.service_id
+       WHERE o.user_id = $1
+       ORDER BY o.created_at DESC`,
+      [req.user!.id]
+    );
     return res.json(result.rows);
   } catch (error: any) {
     return res.status(500).json({ error: error.message || "Unable to fetch orders" });
