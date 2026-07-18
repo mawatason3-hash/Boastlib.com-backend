@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { query } from "../db";
-import { requireAuth, requireAdmin } from "../middleware/requireAuth";
+import { requireAuth } from "../middleware/requireAuth";
+import { requireAdmin } from "../middleware/requireAdmin";
 
 const router = Router();
 
