@@ -17,7 +17,31 @@ import { runMigrations } from "./migrate";
 dotenv.config();
 const app = express();
 
-app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
+const frontendOrigin = (process.env.FRONTEND_URL || "").replace(/\/$/, "");
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+
+      if (!frontendOrigin) {
+        callback(null, true);
+        return;
+      }
+
+      if (origin.replace(/\/$/, "") === frontendOrigin) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`Origin not allowed: ${origin}`));
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
