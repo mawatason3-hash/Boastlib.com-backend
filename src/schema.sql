@@ -1,6 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   full_name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE users (
   created_at TIMESTAMP DEFAULT now()
 );
 
-CREATE TABLE providers (
+CREATE TABLE IF NOT EXISTS providers (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
   api_base_url TEXT NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE providers (
   last_synced TIMESTAMP
 );
 
-CREATE TABLE services (
+CREATE TABLE IF NOT EXISTS services (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   platform TEXT NOT NULL,
   category TEXT NOT NULL,
@@ -40,7 +40,7 @@ CREATE TABLE services (
   updated_at TIMESTAMP DEFAULT now()
 );
 
-CREATE TABLE service_provider_mappings (
+CREATE TABLE IF NOT EXISTS service_provider_mappings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   service_id UUID REFERENCES services(id) ON DELETE CASCADE,
   provider_id UUID REFERENCES providers(id) ON DELETE CASCADE,
@@ -57,7 +57,7 @@ CREATE TABLE service_provider_mappings (
   priority_override BOOLEAN DEFAULT false
 );
 
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id),
   service_id UUID REFERENCES services(id),
@@ -73,7 +73,7 @@ CREATE TABLE orders (
   created_at TIMESTAMP DEFAULT now()
 );
 
-CREATE TABLE transactions (
+CREATE TABLE IF NOT EXISTS transactions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id),
   type TEXT NOT NULL,
@@ -85,7 +85,7 @@ CREATE TABLE transactions (
   created_at TIMESTAMP DEFAULT now()
 );
 
-CREATE TABLE developer_keys (
+CREATE TABLE IF NOT EXISTS developer_keys (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   issued_to TEXT NOT NULL,
   api_key TEXT UNIQUE NOT NULL,
@@ -98,7 +98,7 @@ CREATE TABLE developer_keys (
   created_at TIMESTAMP DEFAULT now()
 );
 
-CREATE TABLE developer_info (
+CREATE TABLE IF NOT EXISTS developer_info (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
   contact TEXT NOT NULL,
@@ -106,7 +106,7 @@ CREATE TABLE developer_info (
   created_at TIMESTAMP DEFAULT now()
 );
 
-CREATE TABLE company_info (
+CREATE TABLE IF NOT EXISTS company_info (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
   email TEXT NOT NULL,
@@ -118,7 +118,7 @@ CREATE TABLE company_info (
   created_at TIMESTAMP DEFAULT now()
 );
 
-CREATE TABLE payment_gateway_configs (
+CREATE TABLE IF NOT EXISTS payment_gateway_configs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   country TEXT NOT NULL,
   method_type TEXT NOT NULL,
@@ -126,7 +126,7 @@ CREATE TABLE payment_gateway_configs (
   enabled BOOLEAN DEFAULT true
 );
 
-CREATE TABLE admin_power_boosts (
+CREATE TABLE IF NOT EXISTS admin_power_boosts (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   admin_id UUID REFERENCES users(id),
   platform TEXT NOT NULL,

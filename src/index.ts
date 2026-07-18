@@ -12,6 +12,7 @@ import adminRoutes from "./routes/admin";
 import adminPowerRoutes from "./routes/adminPower";
 import companyRoutes from "./routes/company";
 import developerRoutes from "./routes/developer";
+import { runMigrations } from "./migrate";
 
 dotenv.config();
 const app = express();
@@ -34,4 +35,15 @@ app.use("/api/public/services", publicServiceRoutes);
 app.get("/health", (_req, res) => res.json({ status: "healthy" }));
 
 const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => console.log(`BoastLib backend on ${PORT}`));
+
+async function start() {
+  try {
+    await runMigrations();
+    app.listen(PORT, () => console.log(`BoastLib backend on ${PORT}`));
+  } catch (err) {
+    console.error("Failed to run migrations, server not started:", err);
+    process.exit(1);
+  }
+}
+
+start();
