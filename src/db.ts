@@ -8,6 +8,7 @@ function resolveConnectionString() {
     process.env.DATABASE_URL,
     process.env.DATABASE_PUBLIC_URL,
     process.env.DATABASE_PRIVATE_URL,
+    process.env.RAILWAY_DATABASE_URL,
   ].filter(Boolean) as string[];
 
   let connectionString = candidates[0] || "";
@@ -24,7 +25,7 @@ function resolveConnectionString() {
   }
 
   if (!connectionString) {
-    throw new Error("No database connection string found. Set DATABASE_URL, DATABASE_PUBLIC_URL, DATABASE_PRIVATE_URL, or PGHOST/PGUSER/PGPASSWORD/PGDATABASE.");
+    throw new Error("No database connection string found. Set DATABASE_URL, DATABASE_PUBLIC_URL, DATABASE_PRIVATE_URL, RAILWAY_DATABASE_URL, or PGHOST/PGUSER/PGPASSWORD/PGDATABASE.");
   }
 
   if (connectionString.startsWith("postgres://")) {
