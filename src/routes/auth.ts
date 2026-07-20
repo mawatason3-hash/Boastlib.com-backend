@@ -3,6 +3,7 @@ import { Request, Response, Router } from "express";
 import { z } from "zod";
 import { query } from "../db";
 import { hashPassword, verifyPassword, createToken } from "../auth";
+import { requireAuth, AuthRequest } from "../middleware/requireAuth";
 
 const router = Router();
 const googleStateStore = new Map<string, number>();
@@ -26,6 +27,7 @@ function sanitizeUser(user: any) {
   return {
     id: user.id,
     full_name: user.full_name,
+    fullName: user.full_name,
     email: user.email,
     role: user.role,
     balance: user.balance,
@@ -49,7 +51,7 @@ router.post("/register", async (req, res) => {
     );
     const user = result.rows[0];
     const token = createToken(user.id, user.role);
-    return res.json({ user, token });
+    return res.json({ user: sanitizeUser(user), token });
   } catch (error: any) {
     if (error.code === "23505") {
       return res.status(400).json({ error: "Email already exists" });
@@ -81,6 +83,32 @@ router.post("/login", async (req, res) => {
     return res.json({ user: sanitizeUser(user), token });
   } catch (error: any) {
     return res.status(400).json({ error: error.message || "Login failed" });
+  }
+});
+
+router.get("/me", requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const result = await query(`SELECT id, full_name, email, role, balance, status FROM users WHERE id = $1`, [userId]);
+    const user = result.rows[0];
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    return res.json({ user: {
+      id: user.id,
+      fullName: user.full_name,
+      email: user.email,
+      role: user.role,
+      balance: user.balance,
+      status: user.status,
+    }});
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message || "Unable to fetch user" });
   }
 });
 

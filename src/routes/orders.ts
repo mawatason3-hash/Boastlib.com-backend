@@ -76,6 +76,31 @@ router.get("/", requireAuth, async (req: AuthRequest, res) => {
   }
 });
 
+router.get("/:id", requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const result = await query(
+      `SELECT
+         o.*,
+         s.name AS service_name,
+         s.platform AS service_platform,
+         s.category AS service_category
+       FROM orders o
+       LEFT JOIN services s ON s.id = o.service_id
+       WHERE o.user_id = $1 AND o.id = $2
+       LIMIT 1`,
+      [req.user!.id, id]
+    );
+    const order = result.rows[0];
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+    return res.json(order);
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message || "Unable to fetch order" });
+  }
+});
+
 router.get("/admin", requireAuth, requireAdmin, async (_req, res) => {
   try {
     const result = await query(`SELECT * FROM orders ORDER BY created_at DESC`);
